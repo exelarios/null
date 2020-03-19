@@ -1,7 +1,7 @@
 const discord = require('discord.js');
 const client = new discord.Client();
 
-const key = require("../key.js").token;
+//const key = require("../key.js").token;
 
 let prefix = `!`;
 let parentCategoryID = '639304634149634059';
