@@ -18,10 +18,10 @@ console.log(inSession);
 client.on('message', async message => {
     if (message.content.startsWith(`${prefix}tutor`)) {
         owners.push(`${message.author}`);
-        if (!checkSession(owners)){
+        if (!checkSession(owners)){ // Check if there's duplicate for for owners 
             await message.guild.channels.create(`${message.author.username}-tutoring`)
             .then( channel => {
-                inSession.push({'Owner': `${message.author}`, 'Channel': `${channel.id}`}); // Check if there's duplicate for for owners 
+                inSession.push({'Owner': `${message.author}`, 'Channel': `${channel.id}`});
                 //channelSession.push(`${channel.id}`);
                 channel.setTopic(`This is ${message.author.username}'s tutoring session. 
                 Once this session has ended please close this channel by saying: !closeSession`);
@@ -62,7 +62,8 @@ client.on('message', async message => {
     }
   });
 
-let checkSession = args => {
+// No idea how this function works; but it works. :>
+let checkSession = args => { 
     let valuesSoFar = Object.create(null);
     for (let i = 0; i < args.length; i++) {
         let value = args[i];
