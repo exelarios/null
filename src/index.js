@@ -32,7 +32,6 @@ client.on('message', async message => {
                 console.log(err);
             })
             message.author.lastMessage.delete();
-            //console.log(channel.parentID);
             //console.log(inSession);
         } else {
             message.reply(`you already created a tutoring session.`);
