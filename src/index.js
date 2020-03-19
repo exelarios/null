@@ -111,6 +111,4 @@ let isSameOwner = (args, owner) => {
     return false;
 }
 
-
-
-client.login(key);
+client.login(process.env.token);
