@@ -13,20 +13,22 @@ client.on('ready', () => {
 
 let inSession = [];
 let owners = [];
+
+let empty = [];
 console.log(inSession);
 
 client.on('message', async message => {
     if (message.content.startsWith(`${prefix}tutor`)) {
-        owners.push(message.author.username);
+        owners.push(message.author.id);
         if (!checkSession(owners)){ // Check if there's duplicate for for owners 
             await message.guild.channels.create(`${message.author.username}-tutoring`)
             .then( channel => {
-                inSession.push({'owner': message.author.username, 'channel': `${channel.id}`});
+                inSession.push({'Owner': message.author.id, 'Channel': `${channel.id}`});
                 //channelSession.push(`${channel.id}`);
                 channel.setTopic(`This is ${message.author.username}'s tutoring session. 
                 Once this session has ended please close this channel by saying: !closeSession`);
                 channel.setParent(parentCategoryID);
-                channel.send(`${message.author} your tutoring session has been created. Once your tutoring session has completed, please close this channel by typing: !closeSession`);
+                channel.send(`${message.author} your tutoring session has been created. Once your tutoring session finished, please close this channel by typing: !end`);
             })
             .catch( err => {
                 console.log(err);
@@ -39,16 +41,17 @@ client.on('message', async message => {
     }
 
 
-    if (message.content.startsWith(`${prefix}endSession`)) {
-        if (isSameChannel(inSession, message.channel.id) && isSameOwner(inSession, `${message.author}`)) {
-            console.log("Index: " + findIndexByChannel(inSession, message.channel.id));
+    if (message.content.startsWith(`${prefix}end`)) {
+        if (isSameChannel(inSession, message.channel.id) && isSameOwner(inSession, message.author.id)) {
+            //console.log("Index: " + findIndexByChannel(inSession, message.channel.id));
             inSession.splice(findIndexByChannel(inSession, message.channel.id), 1);
-            owners.splice(findIdexByOwner(owners, `${message.author}`), 1);
+            owners.splice(findIdexByOwner(owners, message.author.id), 1)
             message.channel.delete();
             console.log(inSession);
             console.log(owners);
         }
     }
+
 
     if (message.content.startsWith(`${prefix}sessions`)) {
         message.channel.send("Session: " + JSON.stringify(inSession));
@@ -58,10 +61,11 @@ client.on('message', async message => {
     }
 
 
-    if (message.content.startsWith(`${prefix}regen`)) {
-        inSession.length = 0;
-        owners.length = 0;
+    if (message.content.startsWith(`${prefix}null`)) {
+        inSession = [];
+        owners = [];
     }
+
 
     if (message.content.startsWith("null")) {
         message.channel.send("Did someone say my name?");
@@ -116,8 +120,6 @@ let isSameOwner = (args, owner) => {
     }
     return false;
 }
-
-
 
 //client.login(key);
 client.login(process.env.token);
