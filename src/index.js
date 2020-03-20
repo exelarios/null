@@ -17,11 +17,11 @@ console.log(inSession);
 
 client.on('message', async message => {
     if (message.content.startsWith(`${prefix}tutor`)) {
-        owners.push(`${message.author}`);
+        owners.push(message.author.username);
         if (!checkSession(owners)){ // Check if there's duplicate for for owners 
             await message.guild.channels.create(`${message.author.username}-tutoring`)
             .then( channel => {
-                inSession.push({'Owner': `${message.author}`, 'Channel': `${channel.id}`});
+                inSession.push({'owner': message.author.username, 'channel': `${channel.id}`});
                 //channelSession.push(`${channel.id}`);
                 channel.setTopic(`This is ${message.author.username}'s tutoring session. 
                 Once this session has ended please close this channel by saying: !closeSession`);
@@ -43,16 +43,16 @@ client.on('message', async message => {
         if (isSameChannel(inSession, message.channel.id) && isSameOwner(inSession, `${message.author}`)) {
             console.log("Index: " + findIndexByChannel(inSession, message.channel.id));
             inSession.splice(findIndexByChannel(inSession, message.channel.id), 1);
-            owners.splice(findIdexByOwner(owners, `${message.author}`), 1)
+            owners.splice(findIdexByOwner(owners, `${message.author}`), 1);
             message.channel.delete();
             console.log(inSession);
             console.log(owners);
         }
     }
 
-    if (message.content.startsWith(`${prefix}print`)) {
+    if (message.content.startsWith(`${prefix}sessions`)) {
         message.channel.send("Session: " + JSON.stringify(inSession));
-        message.channel.send("Owners: " + JSON.stringify(owners));
+        //message.channel.send("Owners: " + JSON.stringify(owners));
         console.log(inSession);
         console.log(owners);     
     }
