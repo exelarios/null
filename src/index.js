@@ -50,10 +50,17 @@ client.on('message', async message => {
         }
     }
 
-
     if (message.content.startsWith(`${prefix}print`)) {
-            console.log(inSession);
-            console.log(owners);     
+        message.channel.send("Session: " + JSON.stringify(inSession));
+        message.channel.send("Owners: " + JSON.stringify(owners));
+        console.log(inSession);
+        console.log(owners);     
+    }
+
+
+    if (message.content.startsWith(`${prefix}regen`)) {
+        inSession.length = 0;
+        owners.length = 0;
     }
 
     if (message.content.startsWith("null")) {
@@ -110,4 +117,7 @@ let isSameOwner = (args, owner) => {
     return false;
 }
 
+
+
+//client.login(key);
 client.login(process.env.token);
