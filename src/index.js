@@ -1,125 +1,68 @@
 const discord = require('discord.js');
+const firebaseAdmin = require("firebase-admin");
+
 const client = new discord.Client();
+require('dotenv').config();
 
-//const key = require("../key.js").token;
+firebaseAdmin.initializeApp({
+    credential: firebaseAdmin.credential.cert({
+        "type": process.env.TYPE,
+        "project_id": process.env.PROJECT_ID,
+        "private_key_id": process.env.PRIVATE_KEY_ID,
+        "private_key": process.env.PRIVATE_KEY,
+        "client_email": process.env.CLIENT_EMAIL,
+        "client_id": process.env.CLIENT_ID,
+        "auth_uri": process.env.AUTH_URI,
+        "token_uri": process.env.TOKEN_URL,
+        "auth_provider_x509_cert_url": process.env.AUTH_PROVIDER_X509_CERT_URL,
+        "client_x509_cert_url": process.env.CLIENT_X509_CERT_URL
+    }),
+    databaseURL: "https://null-ba189.firebaseio.com"
+})
 
+let database = firebaseAdmin.database();
+let users = database.ref("/users");
 let prefix = `!`;
 let parentCategoryID = '639304634149634059';
 
 client.on('ready', () => {
     console.log("Null is online.");
-    client.user.setActivity('with your grades.', {type: 'PLAYING'})
-})
-
-let inSession = [];
-let owners = [];
-
-let empty = [];
-console.log(inSession);
+    client.user.setActivity('with your grades.', {type: 'PLAYING'});
+    //let supportCategory = client.channels.cache.find( category => category.name == "Support" && category.type == "category");
+});
 
 client.on('message', async message => {
     if (message.content.startsWith(`${prefix}tutor`)) {
-        owners.push(message.author.id);
-        if (!checkSession(owners)){ // Check if there's duplicate for for owners 
-            await message.guild.channels.create(`${message.author.username}-tutoring`)
-            .then( channel => {
-                inSession.push({'Owner': message.author.id, 'Channel': `${channel.id}`});
-                //channelSession.push(`${channel.id}`);
-                channel.setTopic(`This is ${message.author.username}'s tutoring session. 
-                Once this session has ended please close this channel by saying: !closeSession`);
-                channel.setParent(parentCategoryID);
-                channel.send(`${message.author} your tutoring session has been created. Once your tutoring session finished, please close this channel by typing: !end`);
-            })
-            .catch( err => {
-                console.log(err);
-            })
-            message.author.lastMessage.delete();
-            //console.log(inSession);
-        } else {
-            message.reply(`you already created a tutoring session.`);
-        }
+        users.child(message.author.id).once("value", function(snapshot) {
+            if (snapshot.val() != null) {
+                message.reply("you have already created a session.")
+                .then(reply => {
+                    reply.delete({ timeout: 5000 })
+                        .catch(console.error);
+                });
+            } else {
+                message.guild.channels.create(`${message.author.username}-tutoring`)
+                .then( async channel => {
+                    users.child(message.author.id).update({
+                        channel_id: channel.id
+                    })
+                    await channel.setParent(parentCategoryID, {lockPermissions: true})
+                    channel.setTopic(`This is ${message.author.username}'s tutoring session. Once this session has ended please close this channel by saying: !closeSession`);
+                    channel.send(`${message.author} your tutoring session has been created. Once your tutoring session finished, please close this channel by typing: !end`);
+                })
+            }
+        })
+        message.author.lastMessage.delete({timeout: 6000});
     }
-
 
     if (message.content.startsWith(`${prefix}end`)) {
-        if (isSameChannel(inSession, message.channel.id) && isSameOwner(inSession, message.author.id)) {
-            //console.log("Index: " + findIndexByChannel(inSession, message.channel.id));
-            inSession.splice(findIndexByChannel(inSession, message.channel.id), 1);
-            owners.splice(findIdexByOwner(owners, message.author.id), 1)
-            message.channel.delete();
-            console.log(inSession);
-            console.log(owners);
-        }
+       users.child(message.author.id).once("value", function(snapshot) {
+           if ((snapshot.val().channel_id == message.channel.id) && users.child(message.author.id).key == message.author.id) {
+               users.child(message.author.id).remove();
+               message.channel.delete();
+           }
+       })
     }
+})
 
-
-    if (message.content.startsWith(`${prefix}sessions`)) {
-        message.channel.send("Session: " + JSON.stringify(inSession));
-        //message.channel.send("Owners: " + JSON.stringify(owners));
-        console.log(inSession);
-        console.log(owners);     
-    }
-
-
-    if (message.content.startsWith(`${prefix}null`)) {
-        inSession = [];
-        owners = [];
-    }
-
-
-    if (message.content.startsWith("null")) {
-        message.channel.send("Did someone say my name?");
-    }
-  });
-
-// No idea how this function works; but it works. :>
-let checkSession = args => { 
-    let valuesSoFar = Object.create(null);
-    for (let i = 0; i < args.length; i++) {
-        let value = args[i];
-        if (value in valuesSoFar) {
-            return true;
-        }
-        valuesSoFar[value] = true;
-    }
-    return false;
-}
-
-let findIdexByOwner = (args, owner) => {
-    for (let i = 0; i < args.length; i++){
-        if (args[i] == owner) {
-            return i;
-        }
-    }
-}
-
-let findIndexByChannel = (args, channel) => {
-    for (let i = 0; i < args.length; i++){
-        if (args[i].Channel == channel) {
-            return i;
-        }
-    }
-}
-
-let isSameChannel = (args, channelId) => {
-    for (let i = 0; i < args.length; i++){
-        console.log(args[i].Channel == channelId);
-        if (args[i].Channel == channelId) {
-            return true;
-        }
-    }
-    return false;
-}
-
-let isSameOwner = (args, owner) => {
-    for (let i = 0; i < args.length; i++){
-        console.log(args[i].Owner == owner);
-        if (args[i].Owner == owner) {
-            return true;
-        }
-    }
-    return false;
-}
-
-//client.login(key);
-client.login(process.env.token);
+client.login(process.env.TOKEN);
